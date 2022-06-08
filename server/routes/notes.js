@@ -2,17 +2,15 @@ const express = require("express");
 const { route } = require("express/lib/router");
 const mongodb = require("mongodb");
 const crypto = require('crypto')
-const shasum = crypto.createHash('sha1')
 
 const router = express.Router();
 //get notes
 
 function sha1(text) {
+    const shasum = crypto.createHash('sha1')
     shasum.update(text);
     return shasum.digest('hex');
 }
-
-
 
 const connectionString = 'mongodb+srv://expressapi:XmEH7vvlhR7p1K3S@stickynotes.t0zrfto.mongodb.net/?retryWrites=true&w=majority';
 
@@ -30,8 +28,8 @@ async function UsersCollection() {
 router.get("/notes", async (req, res) => {
 
     res.json({
-        std:"exa",
-        e:34
+        std: "exa",
+        e: 34
     });
 
 });
@@ -39,29 +37,48 @@ router.get("/notes", async (req, res) => {
 
 router.post("/register", async (req, res) => {
 
-    const users = await UsersCollection();
+    if (!("password" in req.body && "name" in req.body)) {
+        res.status(400);
+        res.send("invalid object");
+        return ;
+    }
 
-    //check for name conflict
+    const users = await UsersCollection();
 
     let usr = {
         name: req.body.name,
         password: sha1(req.body.password)
     };
 
-    await users.insertOne(usr);
+    let result = await users.find(usr);
+    let arr = await result.toArray();
 
-    res.json({
-        id: usr._id
+    if (arr.length != 0) {
+        res.status(500);
+        res.send("users exits");
+        return;
+    }
+
+    users.insertOne(usr).then(() => {
+
+        res.json({
+            id: usr._id
+        });
+    }).catch(e => {
+        res.status(400);
+        res.send("Cannot commit operation");
     });
-
+    //implement jwt
 });
 
-router.post("/login", async (req, res)=>{
+router.post("/login", async (req, res) => {
 
 });
 
 //add note
 
 //delete note
+
+//get all user's notes
 
 module.exports = router;
