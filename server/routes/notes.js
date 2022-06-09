@@ -1,48 +1,10 @@
 const express = require("express");
 const { route } = require("express/lib/router");
 const mongodb = require("mongodb");
-const crypto = require('crypto')
+const crypto = require('crypto');
 const jwt = require("jsonwebtoken");
-
+const utils = require("../utils.js")
 const router = express.Router();
-//get notes
-
-function sha1(text) {
-    const shasum = crypto.createHash('sha1')
-    shasum.update(text);
-    return shasum.digest('hex');
-}
-
-const connectionString = 'mongodb+srv://expressapi:XmEH7vvlhR7p1K3S@stickynotes.t0zrfto.mongodb.net/?retryWrites=true&w=majority';
-
-async function UsersCollection() {
-    try {
-        const client = await mongodb.MongoClient.connect(connectionString, { useNewUrlParser: true });
-        return client.db("StickyNotes").collection("users");
-
-    } catch (error) {
-        console.log(error);
-    }
-    return null;
-}
-
-const maxAge = 3 * 24 * 60 * 60;
-function CreateToken(userId) {
-    return jwt.sign({ userId }, "super secret SEcret",
-        {
-            expiresIn: maxAge
-        });
-}
-
-router.get("/notes", async (req, res) => {
-
-    res.json({
-        std: "exa",
-        e: 34
-    });
-
-});
-
 
 router.post("/register", async (req, res) => {
 
@@ -52,14 +14,15 @@ router.post("/register", async (req, res) => {
         return;
     }
 
-    const users = await UsersCollection();
+    const users = await utils.UsersCollection();
 
     let usr = {
         name: req.body.name,
-        password: sha1(req.body.password)
+        password: utils.sha1(req.body.password),
+        notes:[]
     };
 
-    let result = await users.find({name:usr.name});
+    let result = await users.find({ name: usr.name });
     let arr = await result.toArray();
 
     if (arr.length != 0) {
@@ -69,18 +32,17 @@ router.post("/register", async (req, res) => {
     }
 
     users.insertOne(usr).then(() => {
-         const token = CreateToken(usr._id);
-         res.cookie('jwt', token, { httpOnly: true, maxAge: maxAge * 1000 });
+        const token = utils.CreateToken(usr._id);
+        res.cookie('jwt', token, { httpOnly: true, maxAge: utils.maxAge * 1000 });
 
         res.json({
-            id: usr._id
+            token: token
         });
     }).catch(e => {
         res.status(400);
         res.send("Cannot commit operation");
         console.error(e);
     });
-    //implement jwt
 });
 
 router.post("/login", async (req, res) => {
@@ -89,10 +51,10 @@ router.post("/login", async (req, res) => {
         res.json({ message: "invalid object" });
         return;
     }
-    const users = await UsersCollection();
+    const users = await utils.UsersCollection();
     let usr = {
         name: req.body.name,
-        password: sha1(req.body.password)
+        password: utils.sha1(req.body.password)
     };
 
     let dbusr = await users.findOne(usr);
@@ -102,25 +64,58 @@ router.post("/login", async (req, res) => {
         res.json({ message: "incorrect login" });
         return;
     }
+
+    const token = utils.CreateToken(dbusr._id);
+    res.cookie('jwt', token, { httpOnly: true, maxAge: utils.maxAge * 1000 });
+
     res.json({
-        token: dbusr._id // TODO use a real token, not user id
+        token: token
     });
 
 });
 
 router.post("/notes", async (req, res) => {
     //add note
+    utils.AuthenticateRoute(req, res, tokenpayload => {
 
+        let note = {
+            title: req.body.title,
+            message: req.body.message,
+            isurgent: req.body.isurgent
+        }
+
+        db.students.updateOne(
+            { _id: tokenpayload.userId },
+            { $push: { notes: note } }
+         );
+        //insert note to database
+        return res.json({
+            id: tokenpayload.userId,
+            message:"success"
+        });
+    });
 });
 
 router.delete("/notes", async (req, res) => {
-    //delete note
 
+    utils.AuthenticateRoute(req, res, tokenpayload => {
+
+        let usrId = tokenpayload.userId;
+        //delete note
+
+
+
+    });
 });
 
 router.get("/notes", async (req, res) => {
-    //get all user's notes
+    utils.AuthenticateRoute(req, res, tokenpayload => {
+        let usrId = tokenpayload.userId;
 
+        //get all user's notes from db
+
+
+    });
 });
 
 module.exports = router;
