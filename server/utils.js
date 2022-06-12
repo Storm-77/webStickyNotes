@@ -1,19 +1,11 @@
 const mongodb = require("mongodb");
 const jwt = require("jsonwebtoken");
-const crypto = require('crypto')
-
-
-const connectionString = 'mongodb+srv://expressapi:XmEH7vvlhR7p1K3S@stickynotes.t0zrfto.mongodb.net/?retryWrites=true&w=majority';
-
-const jwtData = {
-    headerKey: "headerKey",
-    jwtSecretKey: "super secret Secret"
-}
-
+const crypto = require('crypto');
+require("dotenv").config();
 
 async function UsersCollection() {
     try {
-        const client = await mongodb.MongoClient.connect(connectionString, { useNewUrlParser: true });
+        const client = await mongodb.MongoClient.connect(process.env.MONGODB_CONNECTION_STRING, { useNewUrlParser: true });
         return client.db("StickyNotes").collection("users");
 
     } catch (error) {
@@ -22,28 +14,21 @@ async function UsersCollection() {
     return null;
 }
 
-async function AuthenticateRoute(req, res, next) {
-    try {
-        const token = req.cookies.jwt;
-
-        const verified = jwt.verify(token, jwtData.jwtSecretKey);
-        if (verified) {
-            next(verified);
-        } else {
-            return res.status(401).send(error);
-        }
-    } catch (error) {
-        // Access Denied
-        return res.status(401).send(error);
-    }
+function CreateToken(userId) {
+    return jwt.sign(userId, process.env.ACCESS_TOKEN_SECRET);
 }
 
-const maxAge = 3 * 24 * 60 * 60;
-function CreateToken(userId) {
-    return jwt.sign({ userId }, jwtData.jwtSecretKey,
-        {
-            expiresIn: maxAge
-        });
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+    if (token == null) return res.sendStatus(401)
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        console.log(err != null ? err : 'authentication successfull!')
+        if (err) return res.sendStatus(403)
+        req.user = user
+        next()
+    })
 }
 
 function sha1(text) {
@@ -54,8 +39,7 @@ function sha1(text) {
 
 module.exports = {
     CreateToken,
-    AuthenticateRoute,
     UsersCollection,
     sha1,
-    maxAge
+    authenticateToken
 }

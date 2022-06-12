@@ -1,14 +1,13 @@
 const express = require("express");
-const { route } = require("express/lib/router");
 const mongodb = require("mongodb");
 const crypto = require('crypto');
-const jwt = require("jsonwebtoken");
-const utils = require("../utils.js")
+const utils = require("../utils.js");
+const { sendStatus } = require("express/lib/response");
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
 
-    if (!("password" in req.body && "name" in req.body)) {
+    if (!("password" in req.body && "login" in req.body)) {
         res.status(400);
         res.send("invalid object");
         return;
@@ -17,9 +16,9 @@ router.post("/register", async (req, res) => {
     const users = await utils.UsersCollection();
 
     let usr = {
-        name: req.body.name,
+        name: req.body.login,
         password: utils.sha1(req.body.password),
-        notes:[]
+        notes: []
     };
 
     let result = await users.find({ name: usr.name });
@@ -32,8 +31,7 @@ router.post("/register", async (req, res) => {
     }
 
     users.insertOne(usr).then(() => {
-        const token = utils.CreateToken(usr._id);
-        res.cookie('jwt', token, { httpOnly: true, maxAge: utils.maxAge * 1000 });
+        const token = utils.CreateToken({ id: usr._id });
 
         res.json({
             token: token
@@ -46,27 +44,23 @@ router.post("/register", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-    if (!("password" in req.body && "name" in req.body)) {
-        res.status(400);
-        res.json({ message: "invalid object" });
+    if (!("password" in req.body && "login" in req.body)) {
+        res.sendStatus(400);
         return;
     }
     const users = await utils.UsersCollection();
     let usr = {
-        name: req.body.name,
+        name: req.body.login,
         password: utils.sha1(req.body.password)
     };
 
     let dbusr = await users.findOne(usr);
-
-    if (dbusr === null) {
-        res.status(404);
-        res.json({ message: "incorrect login" });
+    if (dbusr == null) {
+        res.sendStatus(500);
         return;
     }
 
-    const token = utils.CreateToken(dbusr._id);
-    res.cookie('jwt', token, { httpOnly: true, maxAge: utils.maxAge * 1000 });
+    const token = utils.CreateToken({ id: dbusr._id });
 
     res.json({
         token: token
@@ -74,48 +68,70 @@ router.post("/login", async (req, res) => {
 
 });
 
-router.post("/notes", async (req, res) => {
-    //add note
-    utils.AuthenticateRoute(req, res, tokenpayload => {
+router.post("/notes", utils.authenticateToken, async (req, res) => {
 
-        let note = {
-            title: req.body.title,
-            message: req.body.message,
-            isurgent: req.body.isurgent
+    let note = {
+        title: req.body.title,
+        message: req.body.message,
+        isurgent: req.body.isurgent
+    }
+
+    const users = await utils.UsersCollection();
+
+    let dbresult = await users.updateOne(
+        { _id: mongodb.ObjectId(req.user.id) },
+        { $push: { notes: note } }
+    );
+
+    if (dbresult.modifiedCount = 1) {
+        return res.json({
+            message: "success"
+        });
+    }
+    else return sendStatus(500);
+});
+
+//delete note
+router.delete("/notes", utils.authenticateToken, async (req, res) => {
+
+    //delete note
+
+    const users = await utils.UsersCollection();
+
+    let a = await users.update(
+        {
+
+            _id: mongodb.ObjectId(req.user.id)
+        },
+        {
+            $pull: {
+                'notes': {
+                    title: req.body.title,
+                    message: req.body.message,
+                    isurgent: req.body.isurgent
+                }
+            }
         }
 
-        db.students.updateOne(
-            { _id: tokenpayload.userId },
-            { $push: { notes: note } }
-         );
-        //insert note to database
-        return res.json({
-            id: tokenpayload.userId,
-            message:"success"
-        });
-    });
+    );
+    console.log(a);
+
+    res.sendStatus(200);
+
 });
 
-router.delete("/notes", async (req, res) => {
+router.get("/notes", utils.authenticateToken, async (req, res) => {
 
-    utils.AuthenticateRoute(req, res, tokenpayload => {
+    const users = await utils.UsersCollection();
 
-        let usrId = tokenpayload.userId;
-        //delete note
+    const user = await users.findOne({ _id: mongodb.ObjectId(req.user.id) });
 
+    res.json(
+        {
+            notes: user.notes
+        }
+    );
 
-
-    });
-});
-
-router.get("/notes", async (req, res) => {
-    utils.AuthenticateRoute(req, res, tokenpayload => {
-        let usrId = tokenpayload.userId;
-
-        //get all user's notes from db
-
-
-    });
 });
 
 module.exports = router;

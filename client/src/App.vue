@@ -1,7 +1,7 @@
 <template>
   <TopBanner @successfull-login="onLogin" @logout-attempt="onLogout" />
 
-  <NoteListing :userId="userId" />
+  <NoteListing :userToken="userToken" />
 </template>
 
 <script>
@@ -16,15 +16,15 @@ export default {
   },
   data() {
     return {
-      userId: null,
+      userToken: null,
     };
   },
   methods: {
-    onLogin(userId) {
-      this.userId = userId;      
+    onLogin(userToken) {
+      this.userToken = userToken;      
     },
     onLogout() {
-      this.userId = null;
+      this.userToken = null;
     },
   },
   async created() {
