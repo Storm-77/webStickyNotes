@@ -1,28 +1,29 @@
 
 <style scoped>
 .main {
-  max-width: 230px;
+  max-width: 250px;
+  flex: 0 1 auto;
   background-color: wheat;
-  padding: 10px;  
+  padding: 10px;
   border-radius: 10px;
 }
 .head {
-  display:flex;
-  align-items:center;
+  display: flex;
+  align-items: center;
   padding: 5px 0;
   border-bottom: 2px brown solid;
 }
-div{
-   font-size: 20px;
+div {
+  font-size: 20px;
+  word-wrap: break-word;
 }
-input{
-  margin:0;
+input {
+  margin: 0;
 }
-.chk{
-
+.chk {
   margin: 0 5px;
 }
-img{
+img {
   max-height: 16px;
 }
 .edit {
@@ -30,8 +31,8 @@ img{
   color: black;
   padding: 0 5px;
 }
-.urgent{
-background-color: palevioletred;
+.urgent {
+  background-color: palevioletred;
 }
 </style>
 
@@ -40,13 +41,12 @@ background-color: palevioletred;
     <div class="head">
       <input type="text" placeholder="Title" class="" v-model="title" />
       <input class="chk" type="checkbox" v-model="isUrgent" />
-      <img src="../assets/cancel.png" alt="close" @click="deleteNote">
-
+      <img src="../assets/cancel.png" alt="close" @click="deleteNote" />
     </div>
     <contenteditable
-      tag="div"      
-      class="edit"      
-      :class="isUrgent?'urgent':''"
+      tag="div"
+      class="edit"
+      :class="isUrgent ? 'urgent' : ''"
       :contenteditable="true"
       v-model="msg"
       :noNL="true"
@@ -70,6 +70,9 @@ export default {
     data: {
       type: Object,
     },
+    index: {
+      type: Number,
+    },
   },
   data() {
     return {
@@ -79,23 +82,27 @@ export default {
     };
   },
   created() {
-    // $(".ui.checkbox").checkbox();
+    this.isUrgent = this.data.isurgent;
+    this.msg = this.data.message;
+    this.title = this.data.title;
   },
   methods: {
     changeAccepted() {
       //save changes
-      alert("Enter Pressed");
+      alert("TODO: update in db");
     },
-    deleteNote(){
+    deleteNote() {
       alert(`note ${this.title} deleated`);
       //delete from database
-    }
+    },
   },
-  watch:{
-    isUrgent(val){
+  watch: {
+    isUrgent(val) {
       console.log(val);
-    }
-  }
+      console.log("TODO: update in db");
+      //update here
+    },
+  },
 };
 
 //display data of a single note, edit here too
