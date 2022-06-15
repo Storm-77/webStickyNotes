@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-const url = "http://localhost:8000/api/";
+// const url = "http://localhost:8000/api/";
+const url = "http://10.11.110.10:8000/api/";
 
 class AjaxService {
 
@@ -41,15 +42,56 @@ class AjaxService {
         }
     }
 
-    static DeleteNote() {
-        
+    static async DeleteNote(token, index) {
+        const config = {
+            headers: { authorization: `Bearer ${token}` }
+        };
+        try {
+            const res = await axios.delete(`${url}notes/${index}`, config);
+            return res.data.notes;
+        } catch (error) {
+            console.log(error);
+            return null;
+        }
     }
 
-    static AddNote() {
+    static async AddNote(token, { title, message, isurgent }) {
+        const config = {
+            headers: { authorization: `Bearer ${token}` }
+        };
 
+        try {
+            const res = await axios.post(`${url}notes`, { title, message, isurgent }, config);
+            return res.data.notes;
+        } catch (error) {
+            return null;
+        }
     }
 
-    // static UpdateNote(token, noteIndex) {}
+    static async UpdateNote(token, { index, propertyname, value }) {
+
+        // {
+        //     "index":0,
+        //     "propertyname":"isurgent",
+        //     "value":false
+        // }
+
+        const config = {
+            headers: { authorization: `Bearer ${token}` }
+        };
+
+        try {
+            const res = await axios.post(`${url}notes`, {
+                index,
+                propertyname,
+                value,
+            }, config);
+            return res.data.token;
+        } catch (error) {
+            return false;
+        }
+
+    }
 
 }
 

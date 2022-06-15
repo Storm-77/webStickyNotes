@@ -12,7 +12,7 @@ POST http://localhost:8000/api/login
 Content-Type: application/json
 
 {
-    "login" :"adam135",
+    "login" :"adam",
     "password":"123"
 }
 
@@ -29,21 +29,32 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYTFiNjQ0ZDA3NmQzYjQ1MTExNGQ2NCIsImlhdCI6MTY1NTAyMzA0MX0.dzdc7sdgAviewUx5yXnb5iJDk3oIBJ10rpNIZWPXGy8
 
 {
-    "title":"sometit3le",
-    "message":"examplecontent34",
-    "isurgent":false
+    "title":"sometwerwereit3le",
+    "message":"examplecontent34wer",
+    "isurgent":true
 }
+
+### update note
+
+POST http://localhost:8000/api/notes 
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYTFiNjQ0ZDA3NmQzYjQ1MTExNGQ2NCIsImlhdCI6MTY1NTAyMzA0MX0.dzdc7sdgAviewUx5yXnb5iJDk3oIBJ10rpNIZWPXGy8
+
+{
+    "index":0,
+    "propertyname":"isurgent",
+    "value":false
+}
+
 
 ###
 
 DELETE  http://localhost:8000/api/notes 
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYTFiNjQ0ZDA3NmQzYjQ1MTExNGQ2NCIsImlhdCI6MTY1NTAyMzA0MX0.dzdc7sdgAviewUx5yXnb5iJDk3oIBJ10rpNIZWPXGy8
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjYyYTFiNjQ0ZDA3NmQzYjQ1MTExNGQ2NCIsImlhdCI6MTY1NTI4ODIyMX0.V2ibxMK0dajjcBPfx-k_7L5CP-e_v90te6kwl98UvmQ
 
 {
-    "title":"sometitle",
-    "message":"examplecontent",
-    "isurgent":true
+    "index": 2
 }
 
 ###

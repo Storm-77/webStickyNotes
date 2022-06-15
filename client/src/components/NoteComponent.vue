@@ -39,19 +39,30 @@ img {
 <template>
   <div class="main">
     <div class="head">
-      <input type="text" placeholder="Title" class="" v-model="title" />
-      <input class="chk" type="checkbox" v-model="isUrgent" />
+      <input
+        type="text"
+        placeholder="Title"
+        class=""
+        v-model="title"
+        @keyup="titleKey"
+      />
+      <input
+        class="chk"
+        type="checkbox"
+        v-model="isurgent"
+        @click="chkboxclick"
+      />
       <img src="../assets/cancel.png" alt="close" @click="deleteNote" />
     </div>
     <contenteditable
       tag="div"
       class="edit"
-      :class="isUrgent ? 'urgent' : ''"
+      :class="isurgent ? 'urgent' : ''"
       :contenteditable="true"
-      v-model="msg"
+      v-model="message"
       :noNL="true"
       :noHTML="true"
-      @returned="changeAccepted"
+      @returned="changeAccepted('message')"
     />
     <!-- <div class="edit" contenteditable="true" >    </div> -->
   </div>
@@ -60,6 +71,7 @@ img {
 <script>
 // import $ from 'jquery'
 import contenteditable from "vue-contenteditable";
+import AjaxService from "../AjaxService";
 
 export default {
   name: "NoteComponent",
@@ -73,34 +85,38 @@ export default {
     index: {
       type: Number,
     },
+    userToken: null,
   },
   data() {
     return {
-      isUrgent: false,
-      msg: "",
+      isurgent: false,
+      message: "",
       title: "",
     };
   },
   created() {
-    this.isUrgent = this.data.isurgent;
-    this.msg = this.data.message;
+    this.isurgent = this.data.isurgent;
+    this.message = this.data.message;
     this.title = this.data.title;
   },
   methods: {
-    changeAccepted() {
-      //save changes
-      alert("TODO: update in db");
+    async changeAccepted(propName) {
+      await AjaxService.UpdateNote(this.userToken, {
+        index: this.index,
+        propertyname: propName,
+        value: this[propName],
+      });
     },
-    deleteNote() {
-      alert(`note ${this.title} deleated`);
-      //delete from database
+    async deleteNote() {
+      alert(`note ${this.index} deleated`);
+      await AjaxService.DeleteNote(this.userToken, this.index);
     },
-  },
-  watch: {
-    isUrgent(val) {
-      console.log(val);
-      console.log("TODO: update in db");
-      //update here
+    titleKey(ev) {
+      ev.preventDefault();
+      if (ev.keyCode == 13) this.changeAccepted("title");
+    },
+    chkboxclick() {
+      this.changeAccepted("isurgent");
     },
   },
 };

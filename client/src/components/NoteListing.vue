@@ -1,6 +1,6 @@
 <template>
   <div class="grid" v-if="userToken != null">
-    <NoteComponent v-for="(note, index) in notes" :key="note" :data="note" :index="index" />
+    <NoteComponent v-for="(note, index) in notes" :key="note" :data="note" :index="index" :userToken="userToken" />
 
     <button class="addBtn" @click="addNote">+</button>
   </div>

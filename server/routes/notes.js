@@ -3,6 +3,7 @@ const mongodb = require("mongodb");
 const crypto = require('crypto');
 const utils = require("../utils.js");
 const { sendStatus } = require("express/lib/response");
+const { is } = require("express/lib/request");
 const router = express.Router();
 
 router.post("/register", async (req, res) => {
@@ -70,18 +71,40 @@ router.post("/login", async (req, res) => {
 
 router.post("/notes", utils.authenticateToken, async (req, res) => {
 
+    const users = await utils.UsersCollection();
+    let dbresult = null;
+
+    if ("propertyname" in req.body && "index" in req.body && "value" in req.body) {
+
+        let obj = {};
+        obj[`notes.${req.body.index}.${req.body.propertyname}`] = req.body.value;
+
+        dbresult = await users.updateOne(
+            { _id: mongodb.ObjectId(req.user.id) },
+            {
+                // $set: {`notes.${reb.body.index}.${req.body.propertyname}`: req.body.value}
+                $set: obj
+            }
+        );
+        return res.json({
+            message: "success"
+        });
+    }
+
     let note = {
         title: req.body.title,
         message: req.body.message,
         isurgent: req.body.isurgent
     }
 
-    const users = await utils.UsersCollection();
 
-    let dbresult = await users.updateOne(
+    dbresult = await users.updateOne(
         { _id: mongodb.ObjectId(req.user.id) },
         { $push: { notes: note } }
     );
+
+    if (dbresult == null)
+        return sendStatus(500);
 
     if (dbresult.modifiedCount = 1) {
         return res.json({
@@ -92,28 +115,23 @@ router.post("/notes", utils.authenticateToken, async (req, res) => {
 });
 
 //delete note
-router.delete("/notes", utils.authenticateToken, async (req, res) => {
+router.delete("/notes/:index", utils.authenticateToken, async (req, res) => {
 
-    //delete note
+    //delete note by index in the array NOT WORKING FOR SOME REASON
+
 
     const users = await utils.UsersCollection();
 
-    let a = await users.update(
-        {
+    const condition = {
+        _id: mongodb.ObjectId(req.user.id)
+    };
 
-            _id: mongodb.ObjectId(req.user.id)
-        },
-        {
-            $pull: {
-                'notes': {
-                    title: req.body.title,
-                    message: req.body.message,
-                    isurgent: req.body.isurgent
-                }
-            }
-        }
+    console.log(req.params.index);
+    const obj = {};
+    obj[`notes.${req.body.index}`] = 1;
 
-    );
+    await (await utils.UsersCollection()).updateOne(condition, { $unset: obj });
+    await (await utils.UsersCollection()).updateOne(condition, { $pull: { "notes": null } });
     console.log(a);
 
     res.sendStatus(200);
